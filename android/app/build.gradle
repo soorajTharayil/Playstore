@@ -5,8 +5,8 @@ plugins {
 }
 
 // Define versionCode and versionName if not passed from command line
-def flutterVersionCode = project.hasProperty('flutterVersionCode') ? project.flutterVersionCode : 2
-def flutterVersionName = project.hasProperty('flutterVersionName') ? project.flutterVersionName : "1.0.1"
+def flutterVersionCode = project.hasProperty('flutterVersionCode') ? project.flutterVersionCode : 5
+def flutterVersionName = project.hasProperty('flutterVersionName') ? project.flutterVersionName : "1.0.5"
 
 // Load keystore info from key.properties
 def keystoreProperties = new Properties()
