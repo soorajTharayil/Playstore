@@ -4,6 +4,7 @@ import 'package:devkitflutter/library/sk_onboarding_screen/sk_onboarding_screen.
 import 'package:devkitflutter/ui/domain_login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnBoardingPage extends StatefulWidget {
   const OnBoardingPage({Key? key}) : super(key: key);
@@ -20,7 +21,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
           'Tell us about your experience with our healthcare services.',
       titleColor: Colors.black,
       descripColor: const Color(0xFF929794),
-      imageFromUrl: 'assets/images/onboarding_images1.png',
+      imageAssetPath: 'assets/images/onboarding_images1.png',
     ),
     SkOnboardingModel(
       title: 'Rate Our Care',
@@ -28,7 +29,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
           'Help us improve by rating the quality of treatment and services.',
       titleColor: Colors.black,
       descripColor: const Color(0xFF929794),
-      imageFromUrl: 'assets/images/onboarding_images2.png',
+      imageAssetPath: 'assets/images/onboarding_images2.png',
     ),
     SkOnboardingModel(
       title: 'Ensure Quality',
@@ -36,7 +37,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
           'Your feedback drives better care and healthcare management.',
       titleColor: Colors.black,
       descripColor: const Color(0xFF929794),
-      imageFromUrl: 'assets/images/onboarding_images3.png',
+      imageAssetPath: 'assets/images/onboarding_images3.png',
     ),
     SkOnboardingModel(
       title: 'Thank You!',
@@ -44,7 +45,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
           'Thank you for helping us deliver exceptional healthcare services.',
       titleColor: Colors.black,
       descripColor: const Color(0xFF929794),
-      imageFromUrl: 'assets/images/onboarding_images4.png',
+      imageAssetPath: 'assets/images/onboarding_images4.png',
     ),
   ];
 
@@ -69,15 +70,17 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
         bgColor: Colors.white,
         themeColor: assentColor,
         pages: pages,
-        skipClicked: (value) {
-          //Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => HomePage()), (Route<dynamic> route) => false);
+        skipClicked: (value) async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('hasOnboarded', true);
           Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) => DomainLoginPage()));
+              MaterialPageRoute(builder: (context) => const DomainLoginPage()));
         },
-        getStartedClicked: (value) {
-          //Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => HomePage()), (Route<dynamic> route) => false);
+        getStartedClicked: (value) async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('hasOnboarded', true);
           Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) => DomainLoginPage()));
+              MaterialPageRoute(builder: (context) => const DomainLoginPage()));
         },
       ),
     ));

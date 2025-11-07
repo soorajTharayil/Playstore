@@ -15,6 +15,8 @@ const String appName = 'Efeedor';
 // color for apps
 const Color primaryColor = Color(0xFF07ac12);
 const Color assentColor = Color(0xFFe75f3f);
+// Requested brand green for headers/buttons (adjust hex if you have a specific one)
+const Color efeedorBrandGreen = Color(0xFF009688);
 
 const Color blackGrey = Color(0xff777777);
 const Color black21 = Color(0xFF212121);
@@ -42,3 +44,9 @@ Future<String> getLoginEndpoint() async {
 
 // Generic error message
 const String errorOccuredApi = 'Error occurred, please try again later';
+
+// Domain validation API (provide actual URL)
+// Expected response: list/array of objects containing hospital/domain info.
+// We'll check if the entered subdomain exists in any of the string fields.
+const String domainValidationApi =
+    'https://h.efeedor.com/flutter_apk_api/domain_verification.php';

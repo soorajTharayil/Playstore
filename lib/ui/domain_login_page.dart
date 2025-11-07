@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:devkitflutter/ui/signin.dart';
+import 'package:devkitflutter/config/constant.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DomainLoginPage extends StatefulWidget {
@@ -11,37 +14,58 @@ class DomainLoginPage extends StatefulWidget {
 
 class _DomainLoginPageState extends State<DomainLoginPage> {
   final TextEditingController domainController = TextEditingController();
+  bool _loading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 26, 141, 42), // Deep Blue background
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 40),
-            // Logo + Title
-            Column(
-              children: [
-                Image.asset(
-                  'assets/images/efeedor_square_logo.png',
-                  width: 40, // set your desired width
-                  height: 40, // set your desired height
-                  fit: BoxFit
-                      .contain, // make sure it fits nicely without distortion
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'Efeedor',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+            // Header gradient with wave bottom and white branding
+            ClipPath(
+              clipper: _WaveClipper(),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.33,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      efeedorBrandGreen.withOpacity(0.95),
+                      efeedorBrandGreen,
+                    ],
                   ),
                 ),
-              ],
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'assets/images/efeedor_square_logo.png',
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.contain,
+                        color: Colors.white,
+                        colorBlendMode: BlendMode.srcIn,
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Efeedor',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            SizedBox(height: 50),
+            const SizedBox(height: 24),
             // White Card
             Expanded(
               child: Container(
@@ -70,11 +94,26 @@ class _DomainLoginPageState extends State<DomainLoginPage> {
                             controller: domainController,
                             decoration: InputDecoration(
                               hintText: 'eg : kademo',
+                              hintStyle: TextStyle(
+                                color: Colors.black.withOpacity(0.35),
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade400),
                               ),
-                              contentPadding:
-                                  EdgeInsets.symmetric(horizontal: 16),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade400),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(
+                                    color: efeedorBrandGreen, width: 2),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 14),
                             ),
                           ),
                         ),
@@ -104,37 +143,35 @@ class _DomainLoginPageState extends State<DomainLoginPage> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () async {
-                            String domain = domainController.text.trim();
-                            if (domain.isNotEmpty) {
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              await prefs.setString('domain',
-                                  domain); // store domain like 'kademo'
-
-                              // print('Domain entered: $domain.efeedor.com');
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const SignIn()),
-                              );
-                            }
-                          },
+                          onPressed: _loading
+                              ? null
+                              : () async {
+                                  await _validateAndProceed();
+                                },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF1A4D8F),
+                            backgroundColor: efeedorBrandGreen,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child:
-                              Text('Proceed', style: TextStyle(fontSize: 16)),
+                          child: _loading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.4,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : const Text('Proceed',
+                                  style: TextStyle(fontSize: 16)),
                         ),
                       ),
                     ),
                     SizedBox(height: 20),
                     Center(
-                      child: TextButton(
+                      child: OutlinedButton.icon(
                         onPressed: () {
                           showDialog(
                             context: context,
@@ -148,7 +185,7 @@ class _DomainLoginPageState extends State<DomainLoginPage> {
                                   width:
                                       MediaQuery.of(context).size.width * 0.8,
                                   child: Image.asset(
-                                    'assets/images/domain_help.png', // <-- Your image path
+                                    'assets/images/domain_help.png',
                                     fit: BoxFit.contain,
                                   ),
                                 ),
@@ -156,13 +193,16 @@ class _DomainLoginPageState extends State<DomainLoginPage> {
                             },
                           );
                         },
-                        child: Text(
-                          'What is my domain name?',
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontSize: 14,
-                            decoration: TextDecoration.underline,
-                          ),
+                        icon:
+                            Icon(Icons.help_outline, color: efeedorBrandGreen),
+                        label: const Text('What is my domain name?'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: efeedorBrandGreen,
+                          side:
+                              BorderSide(color: efeedorBrandGreen, width: 1.2),
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                         ),
                       ),
                     ),
@@ -190,4 +230,156 @@ class _DomainLoginPageState extends State<DomainLoginPage> {
       ),
     );
   }
+
+  Future<void> _validateAndProceed() async {
+    final String input = domainController.text.trim().toLowerCase();
+    if (input.isEmpty) {
+      _showAlert('Please enter your domain.');
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+    });
+    try {
+      final response = await http.get(Uri.parse(domainValidationApi));
+      if (response.statusCode != 200) {
+        _showAlert('Unable to validate domain. Please try again.');
+        return;
+      }
+
+      final body = jsonDecode(response.body);
+      bool exists = false;
+
+      // API shape: { status: 'success', count: N, data: [ { link: 'https://krr.efeedor.com', ... }, ... ] }
+      final dynamic rows = (body is Map && body['data'] is List)
+          ? body['data']
+          : (body is List ? body : []);
+
+      if (rows is List) {
+        for (final item in rows) {
+          if (item is Map && item['link'] is String) {
+            final String link = (item['link'] as String).trim();
+            try {
+              final uri = Uri.parse(link);
+              final host = uri.host; // e.g., krr.efeedor.com
+              final parts = host.split('.');
+              if (parts.isNotEmpty) {
+                final sub = parts.first.toLowerCase();
+                if (sub == input) {
+                  exists = true;
+                  break;
+                }
+              }
+            } catch (_) {
+              // ignore malformed link rows
+            }
+          }
+        }
+      }
+
+      if (exists) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('domain', input);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SignIn()),
+        );
+      } else {
+        _showAlert('Domain not found. Please check and try again.');
+      }
+    } catch (_) {
+      _showAlert('Error validating domain. Please try again later.');
+    } finally {
+      if (mounted)
+        setState(() {
+          _loading = false;
+        });
+    }
+  }
+
+  void _showAlert(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: efeedorBrandGreen.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.error_outline,
+                      color: Colors.redAccent, size: 34),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Efeedor',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 14, color: Colors.black87, height: 1.3),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        foregroundColor: Colors.white,
+                        backgroundColor: efeedorBrandGreen,
+                        shape: const StadiumBorder(),
+                      ),
+                      child: const Text('OK'),
+                    )
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Simple wave clipper for the header bottom edge
+class _WaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final Path path = Path();
+    path.lineTo(0, size.height - 40);
+    final firstControlPoint = Offset(size.width * 0.25, size.height);
+    final firstEndPoint = Offset(size.width * 0.5, size.height - 28);
+    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy,
+        firstEndPoint.dx, firstEndPoint.dy);
+
+    final secondControlPoint = Offset(size.width * 0.75, size.height - 56);
+    final secondEndPoint = Offset(size.width, size.height - 28);
+    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy,
+        secondEndPoint.dx, secondEndPoint.dy);
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

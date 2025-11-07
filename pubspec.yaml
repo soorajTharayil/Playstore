@@ -43,6 +43,8 @@ dependencies:
   shimmer: 3.0.0
   timeline_tile: 2.0.0
   universal_io: 2.2.2
+  url_launcher: ^6.2.2
+  webview_flutter: ^4.4.2
 
 
 
@@ -121,4 +123,5 @@ flutter:
     - assets/images/onboarding_images4.png
     - assets/images/domain_help.png
     - assets/images/efeedor_square_logo.png
+    - assets/images/login_header_feedback.png
     
